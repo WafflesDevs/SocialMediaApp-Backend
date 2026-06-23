@@ -9,8 +9,8 @@ router = APIRouter(
     tags =["Authentication"] #MAKE SURE TO PUT IN MAINPY TO!
 )
 
-@router.post("/login",response_model=schemas.Token)
-def user_login(login : OAuth2PasswordRequestForm = Depends() ,db: Session = Depends(get_db), status_code=status.HTTP_202_ACCEPTED):
+@router.post("/login", response_model=schemas.Token, status_code=status.HTTP_200_OK)
+def user_login(login: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == login.username).first() #INCLUDES PASS,USER and ID!
     if not user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail=f"Invalid login")

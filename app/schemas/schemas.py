@@ -1,53 +1,60 @@
-
-from pydantic import BaseModel,EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from typing import Optional
-from pydantic.types import conint
+
 
 class PostBase(BaseModel):
     title: str
     content: str
-    published : bool = True
+    published: bool = True
+
 
 class PostCreate(PostBase):
     pass
+
+
 class UserReponse(BaseModel):
     id: int
     email: EmailStr
-    created_at : datetime
+    created_at: datetime
+
     class Config:
-        orm_mode = True
-class PostReponse(BaseModel):
-    id: int
-    email: EmailStr
-    class Config:
-        orm_mode = True
+        from_attributes = True
+
+
 class PostReponse(PostBase):
-    owner : PostReponse
+    id: int
+    created_at: datetime
+    owner_id: int
+    owner: UserReponse
+
     class Config:
-        orm_mode = True #SQL database code is now readable! so it works in everything now since SQLAchemly uses SQL so now users see SQL data
+        from_attributes = True
+
 
 class UserCreate(BaseModel):
-    email : EmailStr
+    email: EmailStr
     password: str
 
+
 class UserLogin(BaseModel):
-        email : EmailStr
-        password: str
+    email: EmailStr
+    password: str
+
+
 class Token(BaseModel):
-        access_token : str
-        token_type: str
+    access_token: str
+    token_type: str
+
 
 class TokenData(BaseModel):
-     id : Optional[str]
+    id: Optional[str] = None
+
 
 class UserVote(BaseModel):
-    post_id : int
-    dir: int = conint(le=1)
-    class Config:
-        orm_mode = True
+    post_id: int
+    dir: int = Field(ge=0, le=1)
 
-# schemas.py
 
 class Post(BaseModel):
     id: int
@@ -56,18 +63,19 @@ class Post(BaseModel):
     published: bool
     created_at: datetime
     owner_id: int
-    owner: UserReponse  # if you include owner
+    owner: UserReponse
 
     class Config:
         from_attributes = True
 
 
 class PostOut(BaseModel):
-    Post: Post       # matches the key name from the query tuple
-    Votes: int       # matches 'Votes' — wait, case matters! (see note below)
+    Post: Post
+    Votes: int
 
     class Config:
         from_attributes = True
+
 
 class Profile(BaseModel):
     id: int
@@ -75,4 +83,4 @@ class Profile(BaseModel):
     posts: list[Post] = []
 
     class Config:
-        from_attributes = True  # orm_mode = True in Pydantic v1
+        from_attributes = True

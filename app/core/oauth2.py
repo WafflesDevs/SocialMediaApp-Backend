@@ -32,11 +32,16 @@ def verify_access_token(token:str,credit_exception): #CHECKS FOR ID IN TOKEN AND
     except JWTError: #Any errors verifying 
         raise credit_exception
     return token_data
-def get_current_user(token:str= Depends(oauth2_scheme), db: Session = Depends(database.get_db)): #RETURNS USER OFF OF ID 
-    credit_expection = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Could not validate Credit",headers={"WWW-Authenticate":"Bearer"})
-    token = verify_access_token(token,credit_expection)
-    user = db.query(models.User).filter(models.User.id == token.id).first()
-
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    token_data = verify_access_token(token, credentials_exception)
+    user = db.query(models.User).filter(models.User.id == int(token_data.id)).first()
+    if user is None:
+        raise credentials_exception
     return user
 
 

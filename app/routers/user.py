@@ -19,7 +19,7 @@ def create_user(info : UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_226_IM_USED,detail=f"The email {info.email} is already in use!")
 
     info.password = utils.hash(info.password)
-    new_user = models.User(**info.dict())
+    new_user = models.User(**info.model_dump())
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
