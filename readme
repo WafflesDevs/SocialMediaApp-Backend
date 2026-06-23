@@ -1,4 +1,1 @@
-# Basically JWT Tokens are just checking for ID's within it and confirming its the user! If it is valid the route runs otherwise it breaks
-
-#secruity works off of JWT tokens and its key and payload
-
+# BACKEND!
