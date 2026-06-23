@@ -1,0 +1,6 @@
+Generic single-database configuration.
+
+#alembic revision -m "TXT"
+
+# alembic revision --autogenerate -m "Add rest of tables and cols! and auto-vote" 
+make sure to import base aka the model meta data in the env file of alembic
