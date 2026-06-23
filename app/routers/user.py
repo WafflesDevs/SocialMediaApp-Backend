@@ -1,37 +1,50 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from fastapi import status, HTTPException, Depends, APIRouter
-from fastapi.security import OAuth2PasswordRequestForm
-import app.models.models as models,app.schemas.schemas as schemas,app.core.utils as utils
+import app.core.utils as utils
+import app.models.models as models
+import app.schemas.schemas as schemas
 from app.db.database import get_db
-from sqlalchemy.orm import Session
 from app.schemas.schemas import UserCreate
 
 router = APIRouter(
     prefix="/users",
-    tags=['Users'] #Swagger UI shows this as diff section!
+    tags=["Users"],
 )
 
 
-
-@router.post("/", status_code=status.HTTP_201_CREATED,response_model=schemas.UserReponse)
-def create_user(info : UserCreate, db: Session = Depends(get_db)):
-    if db.query(models.User).filter(models.User.email == info.email).first():
-        raise HTTPException(status_code=status.HTTP_226_IM_USED,detail=f"The email {info.email} is already in use!")
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.UserReponse)
+async def create_user(info: UserCreate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(models.User).where(models.User.email == info.email)
+    )
+    if result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_226_IM_USED,
+            detail=f"The email {info.email} is already in use!",
+        )
 
     info.password = utils.hash(info.password)
     new_user = models.User(**info.model_dump())
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    await db.commit()
+    await db.refresh(new_user)
     return new_user
 
 
-
 @router.get("/{id}", response_model=schemas.Profile)
-def get_user(id: int, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.id == id).first()
+async def get_user(id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(models.User).where(models.User.id == id))
+    user = result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"The user with id:{id} is not found")
-    
-    user.posts = db.query(models.Post).filter(models.Post.owner_id == id).all()
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"The user with id:{id} is not found",
+        )
+
+    posts_result = await db.execute(
+        select(models.Post).where(models.Post.owner_id == id)
+    )
+    user.posts = posts_result.scalars().all()
     return user
